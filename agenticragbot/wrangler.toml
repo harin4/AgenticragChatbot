@@ -1,0 +1,15 @@
+
+
+name = "kb-formation"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+workers_dev = true
+
+[vars]
+ENVIRONMENT = "production"
+
+[env.dev]
+name = "kb-formation-dev"
+vars = { ENVIRONMENT = "development" }
