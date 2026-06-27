@@ -1,20 +1,19 @@
 {
-  "name": "kb-formation",
-  "version": "1.1.0",
-  "description": "Agentic RAG — Layer 1: KB Formation Worker. Crawls websites, converts to markdown, stores in Neon DB.",
-  "main": "index.js",
+  "name": "kb-processor",
+  "version": "1.0.0",
+  "description": "Agentic RAG — KB Clean + Chunk Pipeline (Layer 1.5). Cleans Jina markdown, chunks into graph-linked JSON, saves to Neon.",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "deploy:dev": "wrangler deploy --env dev",
-    "tail": "wrangler tail",
-    "db:init": "node init-db.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "db:init": "node scripts/init-db.js",
+    "test:pipeline": "node scripts/test-pipeline.js",
+    "test:raw": "node scripts/test-raw.js"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.9.3"
-  },
-  "devDependencies": {
-    "wrangler": "^3.40.0"
+    "@neondatabase/serverless": "^0.9.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
   }
 }

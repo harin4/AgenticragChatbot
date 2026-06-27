@@ -1,0 +1,185 @@
+[
+  {
+    "id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-mergex-company-0",
+    "doc_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5",
+    "index": 0,
+    "source_url": "https://mergex.in/",
+    "heading_path": [
+      "The MergeX Company"
+    ],
+    "slug": "the-mergex-company",
+    "text": "# The MergeX Company",
+    "token_count": 6,
+    "images": [],
+    "has_images": false,
+    "prev_id": null,
+    "next_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scale-is-not-luck-it-s-structure-1",
+    "parent_id": null,
+    "children_ids": [],
+    "related_ids": [
+      "50d77803-7d73-4e12-9046-0dd1984a54fc#the-mergex-company-0",
+      "50d77803-7d73-4e12-9046-0dd1984a54fc#what-we-believe-1",
+      "50d77803-7d73-4e12-9046-0dd1984a54fc#the-ecosystem-2",
+      "50d77803-7d73-4e12-9046-0dd1984a54fc#four-rules-4"
+    ],
+    "graph_role": "root"
+  },
+  {
+    "id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scale-is-not-luck-it-s-structure-1",
+    "doc_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5",
+    "index": 1,
+    "source_url": "https://mergex.in/",
+    "heading_path": [
+      "Scale is not luck.It's structure."
+    ],
+    "slug": "scale-is-not-luck-it-s-structure",
+    "text": "# Scale is not luck.It's structure.\n\nInfrastructure for businesses that intend to scale deliberately,\nwith systems built to reduce friction and support scalable execution.\n\n### Who We Are",
+    "token_count": 47,
+    "images": [],
+    "has_images": false,
+    "prev_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-mergex-company-0",
+    "next_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#who-we-are-2",
+    "parent_id": null,
+    "children_ids": [
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#who-we-are-2",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scaling-becomes-predictable-3",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#most-businesses-don-t-have-a-growth-problem-they-have-a-systems-problem-5",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#diagnose-before-you-build-7",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#how-businesses-scale-when-13",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-latest-perspectives-from-mergex-14",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-mergex-ecosystem-15",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#ready-to-scale-with-more-clarity-16",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#mergex-17",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#who-we-are-2"
+    ],
+    "related_ids": [],
+    "graph_role": "root"
+  },
+  {
+    "id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scaling-becomes-predictable-3",
+    "doc_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5",
+    "index": 3,
+    "source_url": "https://mergex.in/",
+    "heading_path": [
+      "Scale is not luck.It's structure.",
+      "Scaling becomes predictable"
+    ],
+    "slug": "scaling-becomes-predictable",
+    "text": "## Scaling becomes predictable\n\nwhen the structure is right.\nThe MergeX Company builds operational, creative, and educational systems designed to support scalable modern businesses.\n\n### The Real Problem",
+    "token_count": 51,
+    "images": [],
+    "has_images": false,
+    "prev_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#who-we-are-2",
+    "next_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-real-problem-4",
+    "parent_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scale-is-not-luck-it-s-structure-1",
+    "children_ids": [
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-real-problem-4",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-real-problem-4"
+    ],
+    "related_ids": [],
+    "graph_role": "branch"
+  },
+  {
+    "id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#most-businesses-don-t-have-a-growth-problem-they-have-a-systems-problem-5",
+    "doc_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5",
+    "index": 5,
+    "source_url": "https://mergex.in/",
+    "heading_path": [
+      "Scale is not luck.It's structure.",
+      "Most businesses don't have a growth problem.They have a systems problem."
+    ],
+    "slug": "most-businesses-don-t-have-a-growth-problem-they-have-a-systems-problem",
+    "text": "## Most businesses don't have a growth problem.They have a systems problem.\n\nThey hire more people, add more tools, run more campaigns - and wonder why nothing compounds. The answer is almost always the same: there's no underlying system connecting the effort to the outcome.\n\n### How We Consult",
+    "token_count": 74,
+    "images": [],
+    "has_images": false,
+    "prev_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-real-problem-4",
+    "next_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#how-we-consult-6",
+    "parent_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scale-is-not-luck-it-s-structure-1",
+    "children_ids": [
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#how-we-consult-6",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#how-we-consult-6"
+    ],
+    "related_ids": [],
+    "graph_role": "branch"
+  },
+  {
+    "id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#diagnose-before-you-build-7",
+    "doc_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5",
+    "index": 7,
+    "source_url": "https://mergex.in/",
+    "heading_path": [
+      "Scale is not luck.It's structure.",
+      "Diagnose before you build."
+    ],
+    "slug": "diagnose-before-you-build",
+    "text": "## Diagnose before you build.\n\nEvery consulting engagement at MergeX begins with a structured business diagnosis. We use the S.C.A.L.E. Methodology to pinpoint exactly where your business is constrained. Then, and only then, we prescribe and build the solution.\n\n### Scan\n\nMap the full business system and operations.\n\n### Compress\n\nIdentify the single root constraint holding you back.\n\n### Architect\n\nDesign the precise operational system needed to scale.\n\n### Launch\n\nExecute against the blueprint with precision.\n\n### Embed\n\nTransfer full system ownership to your team.",
+    "token_count": 144,
+    "images": [],
+    "has_images": false,
+    "prev_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#how-we-consult-6",
+    "next_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scan-8",
+    "parent_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scale-is-not-luck-it-s-structure-1",
+    "children_ids": [
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scan-8",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#compress-9",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#architect-10",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#launch-11",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#embed-12",
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scan-8"
+    ],
+    "related_ids": [],
+    "graph_role": "branch"
+  },
+  {
+    "id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#how-businesses-scale-when-13",
+    "doc_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5",
+    "index": 13,
+    "source_url": "https://mergex.in/",
+    "heading_path": [
+      "Scale is not luck.It's structure.",
+      "How businesses scale when"
+    ],
+    "slug": "how-businesses-scale-when",
+    "text": "## How businesses scale when\n\nthe right problem gets fixed.\nA collection of businesses we helped solve operational and structural issues limiting scale with creating clearer systems, better execution, and sustainable growth.\n\n## The latest perspectives from MergeX.\n\nECOSYSTEM\n\n## The MergeX Ecosystem\n\nThree specialized brands. One shared philosophy: build the right foundation first.",
+    "token_count": 97,
+    "images": [],
+    "has_images": false,
+    "prev_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#embed-12",
+    "next_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-latest-perspectives-from-mergex-14",
+    "parent_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scale-is-not-luck-it-s-structure-1",
+    "children_ids": [
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-latest-perspectives-from-mergex-14"
+    ],
+    "related_ids": [],
+    "graph_role": "leaf"
+  },
+  {
+    "id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#ready-to-scale-with-more-clarity-16",
+    "doc_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5",
+    "index": 16,
+    "source_url": "https://mergex.in/",
+    "heading_path": [
+      "Scale is not luck.It's structure.",
+      "Ready to scale with more clarity?"
+    ],
+    "slug": "ready-to-scale-with-more-clarity",
+    "text": "## Ready to scale with more clarity?\n\nEvery engagement begins with understanding the business before proposing a solution.\nDIAGNOSE BEFORE YOU BUILD • SCALE WITH CLARITY • PRECISION OVER BREADTH • SYSTEMS OVER SHORTCUTS • DIAGNOSE BEFORE YOU BUILD • SCALE WITH CLARITY • PRECISION OVER BREADTH • SYSTEMS OVER SHORTCUTS • DIAGNOSE BEFORE YOU BUILD • SCALE WITH CLARITY • PRECISION OVER BREADTH • SYSTEMS OVER SHORTCUTS • DIAGNOSE BEFORE YOU BUILD • SCALE WITH CLARITY • PRECISION OVER BREADTH • SYSTEMS OVER SHORTCUTS • DIAGNOSE BEFORE YOU BUILD • SCALE WITH CLARITY • PRECISION OVER BREADTH • SYSTEMS OVER SHORTCUTS • DIAGNOSE BEFORE YOU BUILD • SCALE WITH CLARITY • PRECISION OVER BREADTH • SYSTEMS OVER SHORTCUTS • DIAGNOSE BEFORE YOU BUILD • SCALE WITH CLARITY • PRECISION OVER BREADTH • SYSTEMS OVER SHORTCUTS • DIAGNOSE BEFORE YOU BUILD • SCALE WITH CLARITY • PRECISION OVER BREADTH • SYSTEMS OVER SHORTCUTS •\n\n## MERGEX\n\nCOMPANY",
+    "token_count": 234,
+    "images": [
+      {
+        "alt": "Image 3: Footer Background",
+        "shortUrl": "mergex.in/background/footer/footer.webp"
+      }
+    ],
+    "has_images": true,
+    "prev_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#the-mergex-ecosystem-15",
+    "next_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#mergex-17",
+    "parent_id": "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#scale-is-not-luck-it-s-structure-1",
+    "children_ids": [
+      "d3a8b694-c9ad-44a5-9ac2-942c3c045ed5#mergex-17"
+    ],
+    "related_ids": [],
+    "graph_role": "leaf"
+  }
+]
