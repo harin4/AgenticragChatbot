@@ -21,17 +21,17 @@
  */
 
 import express from 'express';
-import cors    from 'cors';
-import dotenv  from 'dotenv';
-import fs      from 'fs';
-import path    from 'path';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
-import { cleanAndChunkMarkdown }        from './kb-pipeline/index.js';
+import { cleanAndChunkMarkdown } from './src/pipeline/index.js';
 import {
   buildMemoryIndex,
   saveMemoryMdFiles,
   saveGlobalMemoryIndex,
-}                                        from './kb-pipeline/memory.js';
+} from './src/pipeline/memory.js';
 import {
   initChunkSchema,
   saveChunks,
@@ -43,13 +43,13 @@ import {
   listDocsNeedingChunking,
   getAllChunkMemories,
   updateChunkRelatedIds,
-}                                        from './src/chunk-db.js';
-import { getDocById as getDocFromKB }   from './src/db.js';
+} from './src/chunk-db.js';
+import { getDocById as getDocFromKB } from './src/db.js';
 
 dotenv.config();
 
 const PORT = parseInt(process.env.PORT || '3001');
-const env  = { DATABASE_URL: process.env.DATABASE_URL };
+const env = { DATABASE_URL: process.env.DATABASE_URL };
 
 // ─── Express setup ────────────────────────────────────────────────────────────
 const app = express();
@@ -128,26 +128,26 @@ app.post('/process/doc/:docId', async (req, res) => {
     // Response
     const crossLinks = chunks.filter(c => (c.related_ids || []).length > 0).length;
     res.json({
-      status:       'processed',
+      status: 'processed',
       docId,
-      url:          doc.url,
-      title:        doc.title,
-      chunkCount:   chunks.length,
-      avgTokens:    Math.round(chunks.reduce((s, c) => s + c.token_count, 0) / chunks.length),
+      url: doc.url,
+      title: doc.title,
+      chunkCount: chunks.length,
+      avgTokens: Math.round(chunks.reduce((s, c) => s + c.token_count, 0) / chunks.length),
       crossLinks,   // NEW: how many chunks have cross-doc related_ids
       alerts,
-      savedChunks:  chunks.length,
-      backfilled:   backfillCount,
+      savedChunks: chunks.length,
+      backfilled: backfillCount,
       memoryFiles: {
-        perDoc:       `kb/memory/${docId}.memory.md`,
-        chunksJson:   `kb/memory/${docId}.chunks.json`,
-        globalIndex:  'kb/memory/memory-index.md',
+        perDoc: `kb/memory/${docId}.memory.md`,
+        chunksJson: `kb/memory/${docId}.chunks.json`,
+        globalIndex: 'kb/memory/memory-index.md',
       },
       memory: {
         docId,
-        version:   memoryMap.version,
+        version: memoryMap.version,
         timestamp: memoryMap.timestamp,
-        chunks:    memoryMap.chunks.length,
+        chunks: memoryMap.chunks.length,
         graphStats: memoryMap.graphStats,
       },
     });
@@ -172,7 +172,7 @@ app.post('/process/batch', async (req, res) => {
   }
 
   const results = [];
-  const errors  = [];
+  const errors = [];
 
   // Serial processing — each doc builds on the memory of the previous
   for (const docId of docIds) {
@@ -210,11 +210,11 @@ app.post('/process/batch', async (req, res) => {
   saveGlobalMemoryIndex(buildMemoryIndex(allMemories), allMemories);
 
   res.json({
-    status:    'batch-completed',
+    status: 'batch-completed',
     processed: results.length,
-    failed:    errors.length,
+    failed: errors.length,
     results,
-    errors:    errors.length > 0 ? errors : undefined,
+    errors: errors.length > 0 ? errors : undefined,
   });
 });
 
@@ -231,7 +231,7 @@ app.post('/process/raw', async (req, res) => {
   try {
     const { cleaned, chunks, alerts } = await cleanAndChunkMarkdown(markdown, docId);
     res.json({
-      status:  'processed-raw',
+      status: 'processed-raw',
       docId,
       cleaned: { lines: cleaned.lines.length, text: cleaned.markdown, stats: cleaned.stats },
       chunks,
@@ -277,11 +277,11 @@ app.get('/memory-index', async (req, res) => {
     const sharedTopics = enriched.filter(e => e.docCount > 1);
 
     res.json({
-      totalTopics:    enriched.length,
-      sharedTopics:   sharedTopics.length,
-      docCount:       allMemories.length,
-      crossDocEdges:  sharedTopics.reduce((s, t) => s + t.chunkCount, 0),
-      topics:         enriched,
+      totalTopics: enriched.length,
+      sharedTopics: sharedTopics.length,
+      docCount: allMemories.length,
+      crossDocEdges: sharedTopics.reduce((s, t) => s + t.chunkCount, 0),
+      topics: enriched,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -344,22 +344,22 @@ app.post('/init', async (req, res) => {
  */
 app.get('/health', (req, res) => {
   res.json({
-    status:   'ok',
-    service:  'KB Processor — Layer 1.5',
-    version:  '1.1.0',
-    layer:    'Clean + Chunk + Graph + Memory',
+    status: 'ok',
+    service: 'KB Processor — Layer 1.5',
+    version: '1.1.0',
+    layer: 'Clean + Chunk + Graph + Memory',
     memoryFiles: 'kb/memory/*.memory.md  |  kb/memory/memory-index.md',
     endpoints: {
       process_single: 'POST /process/doc/:docId',
-      process_batch:  'POST /process/batch',
-      process_raw:    'POST /process/raw (testing)',
-      memory_json:    'GET /memory/:docId',
-      memory_index:   'GET /memory-index',
-      memory_files:   'GET /kb/memory/<docId>.memory.md (static)',
-      chunk:          'GET /chunks/:chunkId',
-      chunks_list:    'GET /chunks?docId=...',
-      delete_chunk:   'DELETE /chunks/:chunkId',
-      init:           'POST /init',
+      process_batch: 'POST /process/batch',
+      process_raw: 'POST /process/raw (testing)',
+      memory_json: 'GET /memory/:docId',
+      memory_index: 'GET /memory-index',
+      memory_files: 'GET /kb/memory/<docId>.memory.md (static)',
+      chunk: 'GET /chunks/:chunkId',
+      chunks_list: 'GET /chunks?docId=...',
+      delete_chunk: 'DELETE /chunks/:chunkId',
+      init: 'POST /init',
     },
   });
 });
@@ -370,32 +370,32 @@ app.get('/health', (req, res) => {
 
 function buildMemoryMap(doc, chunks) {
   return {
-    version:    '1.1.0',
-    docId:      doc.id,
-    sourceUrl:  doc.url,
-    title:      doc.title,
-    timestamp:  new Date().toISOString(),
+    version: '1.1.0',
+    docId: doc.id,
+    sourceUrl: doc.url,
+    title: doc.title,
+    timestamp: new Date().toISOString(),
     chunks: chunks.map(c => ({
-      id:           c.id,
-      index:        c.index,
-      slug:         c.slug,
-      headingPath:  c.heading_path,
-      tokenCount:   c.token_count,
-      graphRole:    c.graph_role,
-      hasImages:    c.has_images,
-      relatedIds:   c.related_ids || [],
+      id: c.id,
+      index: c.index,
+      slug: c.slug,
+      headingPath: c.heading_path,
+      tokenCount: c.token_count,
+      graphRole: c.graph_role,
+      hasImages: c.has_images,
+      relatedIds: c.related_ids || [],
       connections: {
-        prev:     c.prev_id,
-        next:     c.next_id,
-        parent:   c.parent_id,
+        prev: c.prev_id,
+        next: c.next_id,
+        parent: c.parent_id,
         children: c.children_ids,
       },
     })),
     graphStats: {
-      total:    chunks.length,
-      roots:    chunks.filter(c => c.graph_role === 'root').length,
+      total: chunks.length,
+      roots: chunks.filter(c => c.graph_role === 'root').length,
       branches: chunks.filter(c => c.graph_role === 'branch').length,
-      leaves:   chunks.filter(c => c.graph_role === 'leaf').length,
+      leaves: chunks.filter(c => c.graph_role === 'leaf').length,
     },
   };
 }
@@ -415,7 +415,7 @@ function buildMemoryMap(doc, chunks) {
  * @returns {number} count of chunks updated
  */
 async function backfillRelatedIds(newChunks, newDocId, env) {
-  const { normalizeTitle } = await import('./kb-pipeline/chunk.js');
+  const { normalizeTitle } = await import('./src/pipeline/chunk.js');
 
   // Build lookup: normalizedTitle → chunkId for the new doc's chunks
   const newDocIndex = {};

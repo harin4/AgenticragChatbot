@@ -21,7 +21,7 @@
  */
 
 import { neon } from '@neondatabase/serverless';
-import { cleanAndChunkMarkdown } from './kb-pipeline/index.js';
+import { cleanAndChunkMarkdown } from './src/pipeline/index.js';
 import { config } from 'dotenv';
 import fs from 'fs';
 import path from 'path';

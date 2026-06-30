@@ -3,7 +3,7 @@
  * Quick smoke test — runs the clean+chunk pipeline on a sample markdown string.
  * No DB needed. Run with: node scripts/test-pipeline.js
  */
-import { cleanAndChunkMarkdown } from '../kb-pipeline/index.js';
+import { cleanAndChunkMarkdown } from '../../src/pipeline/index.js';
 
 const SAMPLE = `---
 title: "Mergex Services"
@@ -62,9 +62,9 @@ console.log(`  Kept Imgs  : ${cleaned.stats.keptImages}`);
 console.log('\n── CHUNKS ──────────────────────────────────────');
 for (const c of chunks) {
   const conn = [
-    c.parent_id   ? `parent=${c.parent_id.split('#')[1]}` : null,
-    c.prev_id     ? `prev=${c.prev_id.split('#')[1]}`     : null,
-    c.next_id     ? `next=${c.next_id.split('#')[1]}`     : null,
+    c.parent_id ? `parent=${c.parent_id.split('#')[1]}` : null,
+    c.prev_id ? `prev=${c.prev_id.split('#')[1]}` : null,
+    c.next_id ? `next=${c.next_id.split('#')[1]}` : null,
     c.children_ids.length ? `children=${c.children_ids.length}` : null,
   ].filter(Boolean).join(', ');
 
