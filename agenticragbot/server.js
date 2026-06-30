@@ -26,12 +26,12 @@ import dotenv  from 'dotenv';
 import fs      from 'fs';
 import path    from 'path';
 
-import { cleanAndChunkMarkdown }        from './kb-pipeline/index.js';
+import { cleanAndChunkMarkdown }        from './src/pipeline/index.js';
 import {
   buildMemoryIndex,
   saveMemoryMdFiles,
   saveGlobalMemoryIndex,
-}                                        from './kb-pipeline/memory.js';
+}                                        from './src/pipeline/memory.js';
 import {
   initChunkSchema,
   saveChunks,
@@ -44,12 +44,25 @@ import {
   getAllChunkMemories,
   updateChunkRelatedIds,
 }                                        from './src/chunk-db.js';
-import { getDocById as getDocFromKB }   from './src/db.js';
+import { getDocById as getDocFromKB, listDocs }   from './src/services/db.js';
+import { askGroq } from './src/services/groq.js';
+import { retrieveRelevantChunks } from './src/services/retrieve.js';
+import {
+  ensureCollection,
+  upsertChunkVectors,
+  deleteChunkVector,
+}                                        from './src/services/qdrant.js';
 
 dotenv.config();
 
 const PORT = parseInt(process.env.PORT || '3001');
-const env  = { DATABASE_URL: process.env.DATABASE_URL };
+const env  = {
+  DATABASE_URL:      process.env.DATABASE_URL,
+  QDRANT_URL:        process.env.QDRANT_URL,
+  QDRANT_API_KEY:    process.env.QDRANT_API_KEY,
+  QDRANT_COLLECTION: process.env.QDRANT_COLLECTION,
+  COHERE_API_KEY:    process.env.COHERE_API_KEY,
+};
 
 // ─── Express setup ────────────────────────────────────────────────────────────
 const app = express();
@@ -104,6 +117,9 @@ app.post('/process/doc/:docId', async (req, res) => {
     // Step 4: Save chunks to Neon
     await saveChunks(env, chunks);
 
+    // Step 4b: Embed + upsert the same chunks into Qdrant (keeps Neon + Qdrant in sync)
+    const vectorResult = await upsertChunkVectors(env, chunks);
+
     // Step 5: Build + save memory map to Neon
     const memoryMap = buildMemoryMap(doc, chunks);
     await saveChunkMemory(env, docId, memoryMap);
@@ -135,6 +151,7 @@ app.post('/process/doc/:docId', async (req, res) => {
       chunkCount:   chunks.length,
       avgTokens:    Math.round(chunks.reduce((s, c) => s + c.token_count, 0) / chunks.length),
       crossLinks,   // NEW: how many chunks have cross-doc related_ids
+      vectorsUpserted: vectorResult.upserted, // NEW: chunks embedded + pushed to Qdrant
       alerts,
       savedChunks:  chunks.length,
       backfilled:   backfillCount,
@@ -190,13 +207,14 @@ app.post('/process/batch', async (req, res) => {
       );
 
       await saveChunks(env, chunks);
+      const vectorResult = await upsertChunkVectors(env, chunks);
       const memoryMap = buildMemoryMap(doc, chunks);
       await saveChunkMemory(env, docId, memoryMap);
       saveMemoryMdFiles(docId, memoryMap, chunks, memoryIndex);
       const backfillCount = await backfillRelatedIds(chunks, docId, env);
 
       const crossLinks = chunks.filter(c => (c.related_ids || []).length > 0).length;
-      results.push({ docId, chunkCount: chunks.length, crossLinks, backfilled: backfillCount, status: 'ok' });
+      results.push({ docId, chunkCount: chunks.length, crossLinks, vectorsUpserted: vectorResult.upserted, backfilled: backfillCount, status: 'ok' });
       console.log(`[batch] ✓ ${docId} → ${chunks.length} chunks, ${crossLinks} cross-links`);
 
     } catch (err) {
@@ -321,8 +339,66 @@ app.get('/chunks', async (req, res) => {
 app.delete('/chunks/:chunkId', async (req, res) => {
   try {
     const docId = await deleteChunkCascade(env, req.params.chunkId);
+    await deleteChunkVector(env, req.params.chunkId); // keep Qdrant in sync with Neon
     res.json({ status: 'deleted', chunkId: req.params.chunkId, docId });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /ask
+ * The actual "agent" step: retrieve relevant chunks via Qdrant vector search
+ * + cross-doc related_ids expansion, build a grounded prompt, ask Groq,
+ * return the answer plus exactly which chunks it used.
+ *
+ * Body: { "question": "..." }
+ */
+app.post('/ask', async (req, res) => {
+  const { question, topN } = req.body || {};
+  if (!question || typeof question !== 'string') {
+    return res.status(400).json({ error: 'question field required (string)' });
+  }
+
+  try {
+    const chunks = await retrieveRelevantChunks(env, question, { topN: topN || 4 });
+
+    if (chunks.length === 0) {
+      return res.json({
+        question,
+        answer: "I don't have anything in the knowledge base that matches this question yet.",
+        sources: [],
+      });
+    }
+
+    const context = chunks
+      .map((c, i) => `[${i + 1}] (${(c.heading_path || []).join(' > ')})\n${c.text}`)
+      .join('\n\n---\n\n');
+
+    const systemPrompt =
+      'You are a helpful assistant answering questions about Mergex using only the ' +
+      'provided context. Cite sources inline using [1], [2], etc. matching the context ' +
+      'blocks. If the context does not contain the answer, say so plainly — do not guess.';
+
+    const userPrompt = `Context:\n\n${context}\n\nQuestion: ${question}`;
+
+    const { answer, model, usage } = await askGroq(systemPrompt, userPrompt);
+
+    res.json({
+      question,
+      answer,
+      model,
+      usage,
+      sources: chunks.map((c, i) => ({
+        ref: i + 1,
+        id: c.id,
+        doc_id: c.doc_id,
+        heading_path: c.heading_path,
+        via: c._via,
+      })),
+    });
+  } catch (err) {
+    console.error('[ask] Error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -334,6 +410,20 @@ app.post('/init', async (req, res) => {
   try {
     await initChunkSchema(env);
     res.json({ status: 'initialized', tables: ['kb_chunks', 'kb_chunk_memory'] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /init-vectors
+ * One-time setup: creates the Qdrant collection if it doesn't exist yet.
+ * Run this once before the first /process/doc or /process/batch call.
+ */
+app.post('/init-vectors', async (req, res) => {
+  try {
+    const result = await ensureCollection(env);
+    res.json({ status: 'initialized', ...result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -415,7 +505,7 @@ function buildMemoryMap(doc, chunks) {
  * @returns {number} count of chunks updated
  */
 async function backfillRelatedIds(newChunks, newDocId, env) {
-  const { normalizeTitle } = await import('./kb-pipeline/chunk.js');
+  const { normalizeTitle } = await import('./src/pipeline/chunk.js');
 
   // Build lookup: normalizedTitle → chunkId for the new doc's chunks
   const newDocIndex = {};

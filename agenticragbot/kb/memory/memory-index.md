@@ -4,7 +4,7 @@
 > Topics listed under "Shared Topics" appear in multiple documents —
 > their chunks are linked via `related_ids` for graph traversal by agents.
 
-**Last updated:** 2026-06-27T17:27:56.841Z
+**Last updated:** 2026-06-30T17:01:37.553Z
 **Total topics indexed:** 10
 **Shared across docs:** 2
 **Doc count:** 2

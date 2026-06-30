@@ -6,9 +6,6 @@
  * Input : raw Jina markdown (one page, with YAML front matter)
  * Output: a structured TOPIC TREE — not just stripped text.
  *
- * This is what your mentor means by "human readable passages with topics and
- * subtopics, not noisy paragraphs". The chunker (chunk.js) consumes this tree
- * directly — it never re-parses raw text again.
  *
  * Topic tree shape:
  *   {

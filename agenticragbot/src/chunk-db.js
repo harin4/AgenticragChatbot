@@ -163,6 +163,18 @@ export async function getChunkById(env, chunkId) {
   return rows[0] || null;
 }
 
+/**
+ * getAllChunks
+ * Every chunk in the KB, across every doc. Used by src/services/retrieve.js
+ * for keyword-based retrieval until Layer 2 embeddings/vector search exist —
+ * fine at this KB size (handful of docs), will need a real vector query
+ * once the KB grows past what fits comfortably in memory per request.
+ */
+export async function getAllChunks(env) {
+  const sql = getDb(env);
+  return sql`SELECT * FROM kb_chunks ORDER BY doc_id, "index" ASC`;
+}
+
 export async function getChunkMemory(env, docId) {
   const sql = getDb(env);
   const rows = await sql`
