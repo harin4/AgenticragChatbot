@@ -1,19 +1,36 @@
 {
   "name": "kb-processor",
   "version": "1.0.0",
-  "description": "Agentic RAG — KB Clean + Chunk Pipeline (Layer 1.5). Cleans Jina markdown, chunks into graph-linked JSON, saves to Neon.",
+  "description": "Agentic RAG — KB Clean + Chunk Pipeline (Layer 1.5). Cloudflare Worker + R2 storage.",
   "type": "module",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "db:init": "node scripts/init-db.js",
-    "test:pipeline": "node scripts/test-pipeline.js",
-    "test:raw": "node scripts/test-raw.js"
+    "start": "node scripts/dev/start-worker.js",
+    "start:express": "node server.js",
+    "dev": "node scripts/dev/start-worker.js",
+    "dev:express": "node --watch server.js",
+    "worker:dev": "node scripts/dev/start-worker.js",
+    "deploy": "npx wrangler deploy",
+    "deploy:dev": "npx wrangler deploy --env dev",
+    "r2:create": "npx wrangler r2 bucket create kb-storage",
+    "db:init": "node init-db.js",
+    "migrate:r2": "node scripts/dev/migrate-via-worker.js",
+    "test:pipeline": "node scripts/dev/test-pipeline.js",
+    "test:raw": "node scripts/test-raw.js",
+    "test:fixtures": "node scripts/dev/run-fixtures-test.js",
+    "test:staging": "node scripts/dev/run-staging-db-test.js",
+    "test:e2e": "node scripts/dev/run-e2e-test.js",
+    "staging:sync-schema": "node scripts/dev/sync-staging-schema.js",
+    "sync:r2": "node scripts/dev/sync-docs-to-r2.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "hono": "^4.12.27"
+  },
+  "devDependencies": {
+    "wrangler": "^4.106.0"
   }
 }

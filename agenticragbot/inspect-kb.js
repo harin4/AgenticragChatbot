@@ -20,15 +20,13 @@
  *   With --export: writes files to kb/inspect/ folder you can open in VS Code.
  */
 
-import { neon } from '@neondatabase/serverless';
-import { cleanAndChunkMarkdown } from './src/pipeline/index.js';
-import { config } from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 
-config();
+const API_URL = process.env.API_URL || 'http://127.0.0.1:8787';
+const API_KEY = process.env.API_KEY || '';
 
-const sql = neon(process.env.DATABASE_URL);
+const fetchOpts = API_KEY ? { headers: { 'Authorization': `Bearer ${API_KEY}` } } : {};
 
 const args     = process.argv.slice(2);
 const docIdArg = args.includes('--docId') ? args[args.indexOf('--docId') + 1] : null;
@@ -54,20 +52,35 @@ function sub(title)     { console.log(`\n${BOLD}${BLUE}${hr('─')}${RESET}\n${B
 // ─── Fetch docs ───────────────────────────────────────────────────────────────
 async function getDocs() {
   if (docIdArg) {
-    const rows = await sql`SELECT * FROM kb_documents WHERE id = ${docIdArg} LIMIT 1`;
-    return rows;
+    const res = await fetch(`${API_URL}/inspect/${docIdArg}`, fetchOpts);
+    if (!res.ok) {
+      console.error(`${RED}Error fetching doc ${docIdArg}: ${res.statusText}${RESET}`);
+      process.exit(1);
+    }
+    const data = await res.json();
+    if (data.error) {
+      console.error(`${RED}${data.error}${RESET}`);
+      process.exit(1);
+    }
+    // Attach the API payload so we don't have to recalculate or refetch later
+    data.doc._apiPayload = data;
+    return [data.doc];
   }
-  return await sql`SELECT * FROM kb_documents ORDER BY scraped_at DESC`;
+  
+  const res = await fetch(`${API_URL}/inspect`, fetchOpts);
+  if (!res.ok) {
+    console.error(`${RED}Error fetching docs: ${res.statusText}${RESET}`);
+    process.exit(1);
+  }
+  const data = await res.json();
+  return data.docs;
 }
 
-async function getChunks(docId) {
-  return await sql`
-    SELECT id, doc_id, index, slug, heading_path, text, token_count,
-           graph_role, prev_id, next_id, parent_id, children_ids, has_images
-    FROM kb_chunks
-    WHERE doc_id = ${docId}
-    ORDER BY index ASC
-  `;
+async function getChunks(doc) {
+  if (doc._apiPayload) return doc._apiPayload.storedChunks;
+  const res = await fetch(`${API_URL}/inspect/${doc.id}`, fetchOpts);
+  const data = await res.json();
+  return data.storedChunks || [];
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -116,10 +129,15 @@ for (const doc of docs) {
   if (!RAW && !CHUNKS) {
     sub('2. PIPELINE OUTPUT (clean + chunk run live)');
 
-    const { cleaned, chunks, alerts } = await cleanAndChunkMarkdown(
-      doc.markdown_content,
-      doc.id
-    );
+    let cleaned, chunks, alerts;
+    if (doc._apiPayload) {
+      ({ cleaned, chunks, alerts } = doc._apiPayload.pipeline);
+    } else {
+      // If fetched from list view, fetch full details now
+      const res = await fetch(`${API_URL}/inspect/${doc.id}`, fetchOpts);
+      const data = await res.json();
+      ({ cleaned, chunks, alerts } = data.pipeline);
+    }
 
     // Alert breakdown
     console.log(`\n${BOLD}Alerts (${alerts.length} total):${RESET}`);

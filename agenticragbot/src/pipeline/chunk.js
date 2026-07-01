@@ -131,35 +131,55 @@ function splitOversized(topic, docId, indexRef, frontMatter, parentChunkId) {
 // ─── prev/next + parent/children bookkeeping ─────────────────────────────────
 
 function wireSiblingsAndHierarchy(chunks) {
-  for (let i = 0; i < chunks.length; i++) {
-    if (i > 0) chunks[i].prev_id = chunks[i - 1].id;
-    if (i < chunks.length - 1) chunks[i].next_id = chunks[i + 1].id;
-  }
-
-  const byId = new Map(chunks.map(c => [c.id, c]));
+  // 1. Initial pass to find leaves
+  const tempById = new Map(chunks.map(c => [c.id, c]));
   for (const c of chunks) {
-    if (c.parent_id && byId.has(c.parent_id)) {
-      const parent = byId.get(c.parent_id);
+    if (c.parent_id && tempById.has(c.parent_id)) {
+      const parent = tempById.get(c.parent_id);
       if (!parent.children_ids.includes(c.id)) parent.children_ids.push(c.id);
     }
   }
-
   for (const c of chunks) {
     c.graph_role = !c.parent_id ? 'root' : c.children_ids.length ? 'branch' : 'leaf';
   }
 
-  // Merge sub-MIN_TOKENS leaf chunks into their previous sibling so the KB
-  // doesn't fill up with near-empty vectors.
+  // 2. Merge tiny leaves into preceding siblings
   for (let i = chunks.length - 1; i > 0; i--) {
     if (chunks[i].token_count < MIN_TOKENS && chunks[i].graph_role === 'leaf') {
       const prev = chunks[i - 1];
       if (prev.doc_id === chunks[i].doc_id) {
         prev.text += '\n\n' + chunks[i].text;
         prev.token_count = Math.ceil(prev.text.length / CHARS_PER_TOKEN);
-        prev.children_ids.push(chunks[i].id);
         chunks.splice(i, 1);
       }
     }
+  }
+
+  // 3. Reset arrays for final stable wiring
+  for (const c of chunks) {
+    c.children_ids = [];
+    c.prev_id = null;
+    c.next_id = null;
+  }
+
+  // 4. Final stable wiring
+  const byId = new Map(chunks.map(c => [c.id, c]));
+  
+  for (let i = 0; i < chunks.length; i++) {
+    if (i > 0) chunks[i].prev_id = chunks[i - 1].id;
+    if (i < chunks.length - 1) chunks[i].next_id = chunks[i + 1].id;
+    
+    if (chunks[i].parent_id && byId.has(chunks[i].parent_id)) {
+      const parent = byId.get(chunks[i].parent_id);
+      if (!parent.children_ids.includes(chunks[i].id)) {
+        parent.children_ids.push(chunks[i].id);
+      }
+    }
+  }
+
+  // 5. Final roles
+  for (const c of chunks) {
+    c.graph_role = !c.parent_id ? 'root' : c.children_ids.length ? 'branch' : 'leaf';
   }
 }
 

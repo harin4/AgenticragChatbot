@@ -1,0 +1,8 @@
+# Wrangler local dev loads BOTH .env and .dev.vars — keep API_KEY identical in both,
+# or set it in only one file. Use no quotes around values.
+DATABASE_URL=postgresql://user:pass@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require
+API_KEY=your-local-or-prod-bearer-token
+JINA_API_KEY=jina_xxxx
+
+# Optional: target for migrate:r2 / sync:r2 CLI scripts
+# WORKER_URL=http://127.0.0.1:8787

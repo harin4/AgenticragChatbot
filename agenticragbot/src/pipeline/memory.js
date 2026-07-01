@@ -52,12 +52,11 @@
  *   "Scale" chunk without a graph DB — just array lookups.
  */
 
-import fs   from 'fs';
-import path from 'path';
+
 import { normalizeTitle } from './chunk.js';
 
 // ─── Memory file output directory ─────────────────────────────────────────────
-const MEMORY_DIR = './kb/memory';
+const MEMORY_DIR = process.env.MEMORY_DIR || './kb/memory';
 
 // ════════════════════════════════════════════════════════════════════════════
 // 1. BUILD CROSS-DOC MEMORY INDEX
@@ -128,7 +127,30 @@ export function buildMemoryIndex(allDocMemories) {
  */
 export function renderMemoryMd(memoryMap, chunks, globalMemoryIndex = {}) {
   const lines = [];
-  const { docId, sourceUrl, title, timestamp, graphStats } = memoryMap;
+  const docId = memoryMap.docId;
+  const sourceUrl = memoryMap.sourceUrl || memoryMap.source_url;
+  const title = memoryMap.title;
+  const timestamp = memoryMap.timestamp;
+  const graphStats = memoryMap.graphStats;
+
+  const normalizeChunk = (chunk) => {
+    const headingPath = chunk.heading_path || chunk.headingPath || [];
+    const childrenIds = chunk.children_ids || chunk.connections?.children || [];
+    return {
+      id: chunk.id,
+      slug: chunk.slug,
+      heading_path: headingPath,
+      related_ids: chunk.related_ids || chunk.relatedIds || [],
+      graph_role: chunk.graph_role || chunk.graphRole || 'leaf',
+      token_count: chunk.token_count ?? chunk.tokenCount ?? 0,
+      has_images: chunk.has_images ?? chunk.hasImages ?? false,
+      prev_id: chunk.prev_id ?? chunk.connections?.prev ?? null,
+      next_id: chunk.next_id ?? chunk.connections?.next ?? null,
+      parent_id: chunk.parent_id ?? chunk.connections?.parent ?? null,
+      children_ids: childrenIds,
+      text: chunk.text || '',
+    };
+  };
 
   lines.push(`# Memory Map — ${title || docId}`);
   lines.push('');
@@ -163,8 +185,9 @@ export function renderMemoryMd(memoryMap, chunks, globalMemoryIndex = {}) {
   lines.push('cover the same topic — this is the graph interconnection.');
   lines.push('');
 
-  for (const chunk of chunks) {
-    const headingPath = (chunk.heading_path || []).join(' › ');
+  for (const raw of chunks) {
+    const chunk = normalizeChunk(raw);
+    const headingPath = chunk.heading_path.join(' › ');
     const related = chunk.related_ids || [];
 
     lines.push(`### ${headingPath || chunk.slug}`);
@@ -195,7 +218,8 @@ export function renderMemoryMd(memoryMap, chunks, globalMemoryIndex = {}) {
       }
     } else {
       // Show potential cross-doc matches that WILL be wired when more docs arrive
-      const lastTitle = (chunk.heading_path || [])[chunk.heading_path.length - 1] || '';
+      const path = chunk.heading_path || [];
+      const lastTitle = path[path.length - 1] || '';
       const key = normalizeTitle(lastTitle);
       const potentialMatches = (globalMemoryIndex[key] || [])
         .filter(m => m.docId !== docId);
@@ -315,53 +339,19 @@ export function renderGlobalMemoryIndex(memoryIndex, allMemories = []) {
   return lines.join('\n');
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// 4. SAVE MEMORY.MD FILES TO DISK
-// ════════════════════════════════════════════════════════════════════════════
-
 /**
- * saveMemoryMdFiles
- *
- * Writes two files per document to kb/memory/:
- *   <docId>.memory.md       — per-doc topic map with chunk links
- *   <docId>.chunks.json     — full chunk array (machine-readable)
- *
- * @param {string} docId
- * @param {object} memoryMap
- * @param {Array}  chunks
- * @param {object} globalMemoryIndex  — for showing cross-doc links in memory.md
+ * (Deprecated) saveMemoryMdFiles 
+ * Left for backward compatibility if other modules import it, but it no longer writes to disk.
  */
 export function saveMemoryMdFiles(docId, memoryMap, chunks, globalMemoryIndex = {}) {
-  fs.mkdirSync(MEMORY_DIR, { recursive: true });
-
-  // 1. Per-doc memory.md
-  const memoryMd = renderMemoryMd(memoryMap, chunks, globalMemoryIndex);
-  const memoryPath = path.join(MEMORY_DIR, `${docId}.memory.md`);
-  fs.writeFileSync(memoryPath, memoryMd, 'utf8');
-
-  // 2. Chunks JSON (machine-readable, what Layer 2 reads for embedding)
-  const chunksPath = path.join(MEMORY_DIR, `${docId}.chunks.json`);
-  fs.writeFileSync(chunksPath, JSON.stringify(chunks, null, 2), 'utf8');
-
-  console.log(`[memory] Wrote ${memoryPath}`);
-  console.log(`[memory] Wrote ${chunksPath}`);
-
-  return { memoryPath, chunksPath };
+  // Cloudflare Workers do not have `fs`. We no longer write files to disk.
+  // Markdown generation is now done on-the-fly via the API.
+  return { memoryPath: null, chunksPath: null };
 }
 
 /**
- * saveGlobalMemoryIndex
- *
- * Writes the global cross-document topic index to kb/memory/memory-index.md.
- * Called at the end of every /process/doc or /process/batch run.
+ * (Deprecated) saveGlobalMemoryIndex
  */
 export function saveGlobalMemoryIndex(memoryIndex, allMemories) {
-  fs.mkdirSync(MEMORY_DIR, { recursive: true });
-
-  const indexMd = renderGlobalMemoryIndex(memoryIndex, allMemories);
-  const indexPath = path.join(MEMORY_DIR, 'memory-index.md');
-  fs.writeFileSync(indexPath, indexMd, 'utf8');
-
-  console.log(`[memory] Wrote global index → ${indexPath}`);
-  return indexPath;
+  return null;
 }

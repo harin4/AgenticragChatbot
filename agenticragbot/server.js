@@ -1,28 +1,20 @@
 /**
- * server.js — KB Processor Layer 1.5  (UPDATED)
+ * server.js — LEGACY Express dev server (local tests only)
  * ─────────────────────────────────────────────────────────────────────────────
- * WHAT CHANGED FROM YOUR CURRENT VERSION:
+ * ⚠️  NOT FOR PRODUCTION. Use the Cloudflare Worker instead:
+ *       npm run worker:dev   (local)
+ *       npm run deploy       (production)
  *
- *   1. Memory index loaded from Neon BEFORE chunking each doc
- *      → chunk.js now receives real cross-doc data → related_ids populated ✅
- *
- *   2. After saving chunks, writes physical memory.md files to kb/memory/
- *      → one per-doc .memory.md + one global memory-index.md ✅
- *
- *   3. Back-fill pass after each doc: updates previously-saved chunks
- *      whose related_ids now point to the just-processed doc ✅
- *
- *   4. New route GET /memory-index → full cross-doc topic graph ✅
- *
- *   5. PORT conflict guard — exits cleanly with a helpful message instead
- *      of the raw EADDRINUSE stack trace you got ✅
- *
- * ALL EXISTING ROUTES UNCHANGED.
+ * This server exists only for `npm run test:e2e` and quick local debugging.
+ * It does NOT write to R2 and does NOT implement POST /crawl.
  */
 
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+  const dotenv = await import('dotenv');
+  dotenv.config();
+}
 import fs from 'fs';
 import path from 'path';
 
@@ -43,10 +35,11 @@ import {
   listDocsNeedingChunking,
   getAllChunkMemories,
   updateChunkRelatedIds,
+  buildMemoryIndexFromDB,
 } from './src/chunk-db.js';
-import { getDocById as getDocFromKB } from './src/db.js';
+import { getDocById as getDocFromKB } from './src/services/db.js';
 
-dotenv.config();
+// dotenv loaded dynamically above
 
 const PORT = parseInt(process.env.PORT || '3001');
 const env = { DATABASE_URL: process.env.DATABASE_URL };
@@ -86,12 +79,9 @@ app.post('/process/doc/:docId', async (req, res) => {
 
     console.log(`\n[process] ── Starting: docId=${docId}  (${doc.markdown_content.length} chars)`);
 
-    // Step 2: Load memory index from ALL prior processed docs
-    // FIX: This is what was missing — without loading prior docs' topics,
-    // the chunker had no data to wire related_ids from.
-    const allPriorMemories = await getAllChunkMemories(env);
-    const memoryIndex = buildMemoryIndex(allPriorMemories);
-    console.log(`[process] Memory index loaded: ${Object.keys(memoryIndex).length} topics from ${allPriorMemories.length} prior docs`);
+    // Step 2: Load memory index directly from DB metadata
+    const memoryIndex = await buildMemoryIndexFromDB(env);
+    console.log(`[process] Memory index loaded: ${Object.keys(memoryIndex).length} topics`);
 
     // Step 3: Clean + chunk (memoryIndex passed in → related_ids populated)
     const { cleaned, chunks, alerts } = await cleanAndChunkMarkdown(
@@ -120,10 +110,10 @@ app.post('/process/doc/:docId', async (req, res) => {
       console.log(`[process] Back-filled related_ids in ${backfillCount} prior chunks`);
     }
 
-    // Step 8: Regenerate global memory-index.md with all docs including this one
-    const allMemories = await getAllChunkMemories(env);
-    const updatedIndex = buildMemoryIndex(allMemories);
-    saveGlobalMemoryIndex(updatedIndex, allMemories);
+    // Step 8: (Disabled for scale) Regenerate global memory-index.md
+    // const allMemories = await getAllChunkMemories(env);
+    // const updatedIndex = buildMemoryIndex(allMemories);
+    // saveGlobalMemoryIndex(updatedIndex, allMemories);
 
     // Response
     const crossLinks = chunks.filter(c => (c.related_ids || []).length > 0).length;
@@ -133,7 +123,9 @@ app.post('/process/doc/:docId', async (req, res) => {
       url: doc.url,
       title: doc.title,
       chunkCount: chunks.length,
-      avgTokens: Math.round(chunks.reduce((s, c) => s + c.token_count, 0) / chunks.length),
+      avgTokens: chunks.length
+        ? Math.round(chunks.reduce((s, c) => s + c.token_count, 0) / chunks.length)
+        : 0,
       crossLinks,   // NEW: how many chunks have cross-doc related_ids
       alerts,
       savedChunks: chunks.length,
@@ -180,8 +172,7 @@ app.post('/process/batch', async (req, res) => {
       const doc = await getDocFromKB(env, docId);
       if (!doc) { errors.push({ docId, error: 'not found' }); continue; }
 
-      const allPriorMemories = await getAllChunkMemories(env);
-      const memoryIndex = buildMemoryIndex(allPriorMemories);
+      const memoryIndex = await buildMemoryIndexFromDB(env);
 
       const { chunks, alerts } = await cleanAndChunkMarkdown(
         doc.markdown_content,
@@ -205,9 +196,9 @@ app.post('/process/batch', async (req, res) => {
     }
   }
 
-  // Final global index after all docs processed
-  const allMemories = await getAllChunkMemories(env);
-  saveGlobalMemoryIndex(buildMemoryIndex(allMemories), allMemories);
+  // Final global index after all docs processed (Disabled for scale)
+  // const allMemories = await getAllChunkMemories(env);
+  // saveGlobalMemoryIndex(buildMemoryIndex(allMemories), allMemories);
 
   res.json({
     status: 'batch-completed',
@@ -263,8 +254,7 @@ app.get('/memory/:docId', async (req, res) => {
  */
 app.get('/memory-index', async (req, res) => {
   try {
-    const allMemories = await getAllChunkMemories(env);
-    const memoryIndex = buildMemoryIndex(allMemories);
+    const memoryIndex = await buildMemoryIndexFromDB(env);
 
     // Enrich with topic count and doc count per entry
     const enriched = Object.entries(memoryIndex).map(([topic, refs]) => ({
@@ -275,11 +265,14 @@ app.get('/memory-index', async (req, res) => {
     })).sort((a, b) => b.docCount - a.docCount);
 
     const sharedTopics = enriched.filter(e => e.docCount > 1);
+    const docCount = new Set(
+      enriched.flatMap(e => e.refs.map(r => r.docId))
+    ).size;
 
     res.json({
       totalTopics: enriched.length,
       sharedTopics: sharedTopics.length,
-      docCount: allMemories.length,
+      docCount,
       crossDocEdges: sharedTopics.reduce((s, t) => s + t.chunkCount, 0),
       topics: enriched,
     });
@@ -472,12 +465,11 @@ async function backfillRelatedIds(newChunks, newDocId, env) {
 // ════════════════════════════════════════════════════════════════════════════
 
 const server = app.listen(PORT, () => {
-  console.log(`\n✓ KB Processor (Layer 1.5) v1.1.0 running on port ${PORT}`);
+  console.warn('\n⚠️  LEGACY Express server — NOT for production. Use: npm run worker:dev / npm run deploy\n');
+  console.log(`✓ KB Processor (Express legacy) on port ${PORT}`);
   console.log(`  POST   /process/doc/:docId   ← main pipeline`);
   console.log(`  POST   /process/batch        ← batch mode`);
   console.log(`  GET    /memory-index         ← cross-doc graph`);
-  console.log(`  GET    /memory/:docId        ← per-doc memory`);
-  console.log(`  GET    /kb/memory/<file>.md  ← static memory files`);
   console.log(`  GET    /health\n`);
 });
 

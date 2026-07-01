@@ -1,15 +1,29 @@
-
-
 name = "kb-formation"
 main = "src/index.js"
-compatibility_date = "2024-09-23"
+compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
 workers_dev = true
 
+# Run once: npx wrangler r2 bucket create kb-storage
+[[r2_buckets]]
+binding = "KB_BUCKET"
+bucket_name = "kb-storage"
+
+# ─── Hyperdrive (optional — reduces Neon latency from Workers) ─────────────────
+# Create in Cloudflare dashboard → copy id here:
+# [[hyperdrive]]
+# binding = "HYPERDRIVE"
+# id = "<your-hyperdrive-id>"
+
 [vars]
 ENVIRONMENT = "production"
+R2_PRIMARY = "true"
 
 [env.dev]
 name = "kb-formation-dev"
-vars = { ENVIRONMENT = "development" }
+vars = { ENVIRONMENT = "development", LOCAL_DEV = "true", R2_PRIMARY = "true" }
+
+[[env.dev.r2_buckets]]
+binding = "KB_BUCKET"
+bucket_name = "kb-storage"
